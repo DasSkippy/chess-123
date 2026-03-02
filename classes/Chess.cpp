@@ -1,4 +1,6 @@
 #include "Chess.h"
+#include "Game.h"
+#include "Bitboard.h"
 #include <limits>
 #include <cmath>
 
@@ -48,7 +50,94 @@ void Chess::setUpBoard()
     _grid->initializeChessSquares(pieceSize, "boardsquare.png");
     FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
 
-    startGame();
+    // _currentPlayer = WHITE;
+    // _moves = generateAllMoves
+    // startGame();
+}
+
+bool Chess::canPawnMove(Bit &bit, BitHolder &src, BitHolder &dst)
+{
+    ChessSquare *srcSquare = dynamic_cast<ChessSquare*>(&src);
+    ChessSquare *dstSquare = dynamic_cast<ChessSquare*>(&dst);
+    if (!srcSquare || !dstSquare) return false;
+
+    int direction = (bit.gameTag() < 128) ? 1 : -1; // white moves up, black moves down
+    int startRow = (bit.gameTag() < 128) ? 1 : 6; // white starts on row 1, black starts on row 6
+
+    int srcCol = srcSquare->getColumn();
+    int srcRow = srcSquare->getRow();
+    int dstCol = dstSquare->getColumn();
+    int dstRow = dstSquare->getRow();
+
+    // Check for standard one-square move
+    if (dstCol == srcCol && dstRow == srcRow + direction && dst.empty()) {
+        return true;
+    }
+
+    // Check for two-square move from starting position
+    if (dstCol == srcCol && dstRow == srcRow + 2 * direction && srcRow == startRow && dst.empty()) {
+        ChessSquare *intermediateSquare = _grid->getSquare(srcCol, srcRow + direction);
+        if (intermediateSquare && intermediateSquare->empty()) {
+            return true;
+        }
+    }
+
+    // Check for captures
+    if (std::abs(dstCol - srcCol) == 1 && dstRow == srcRow + direction && !dst.empty() && !dst.bit()->friendly()) {
+        return true;
+    }
+
+    return false;
+}
+
+bool Chess::canKnightMove(Bit &bit, BitHolder &src, BitHolder &dst)
+{
+    ChessSquare *srcSquare = dynamic_cast<ChessSquare*>(&src);
+    ChessSquare *dstSquare = dynamic_cast<ChessSquare*>(&dst);
+    if (!srcSquare || !dstSquare) return false;
+
+    int srcCol = srcSquare->getColumn();
+    int srcRow = srcSquare->getRow();
+    int dstCol = dstSquare->getColumn();
+    int dstRow = dstSquare->getRow();
+
+    int colDiff = std::abs(dstCol - srcCol);
+    int rowDiff = std::abs(dstRow - srcRow);
+
+    // Check for L-shaped move
+    if ((colDiff == 2 && rowDiff == 1) || (colDiff == 1 && rowDiff == 2)) {
+        // Check if destination is empty or occupied by an opponent's piece
+        if (dst.empty() || !dst.bit()->friendly()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool Chess::canKingMove(Bit &bit, BitHolder &src, BitHolder &dst)
+{
+    ChessSquare *srcSquare = dynamic_cast<ChessSquare*>(&src);
+    ChessSquare *dstSquare = dynamic_cast<ChessSquare*>(&dst);
+    if (!srcSquare || !dstSquare) return false;
+
+    int srcCol = srcSquare->getColumn();
+    int srcRow = srcSquare->getRow();
+    int dstCol = dstSquare->getColumn();
+    int dstRow = dstSquare->getRow();
+
+    int colDiff = std::abs(dstCol - srcCol);
+    int rowDiff = std::abs(dstRow - srcRow);
+
+    // Check for one-square move in any direction
+    if (colDiff <= 1 && rowDiff <= 1) {
+        // Check if destination is empty or occupied by an opponent's piece
+        if (dst.empty() || !dst.bit()->friendly()) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void Chess::FENtoBoard(const std::string& fen) {
@@ -110,8 +199,19 @@ bool Chess::canBitMoveFrom(Bit &bit, BitHolder &src)
     return false;
 }
 
-bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst)
-{
+bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst) {
+    int pieceType = bit.gameTag() & 127; // mask out color
+    if (pieceType == Pawn) {
+        return canPawnMove(bit, src, dst);
+    }
+    if (pieceType == Knight) {
+        return canKnightMove(bit, src, dst);
+    }
+    if (pieceType == King) {
+        return canKingMove(bit, src, dst);
+    }
+
+    // TODO: implement other pieces
     return true;
 }
 

@@ -17,7 +17,7 @@ public:
 	void			setName(const std::string &name) { _name = name; }
 	void            setPlayerNumber(int n) { _playerNumber = n; }
 	int			 	playerNumber() { return _playerNumber; }
-	Game			*game();
+	Game			*game() { return _game; }
 	int				index();
 	bool			isCurrent();
 	bool			isFriendly();
@@ -34,4 +34,3 @@ private:
 	bool			_aiPlayer;
 	std::map<std::string, std::string>		_extraValues;
 };
-

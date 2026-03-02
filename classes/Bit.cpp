@@ -1,5 +1,7 @@
 
 #include "Bit.h"
+#include "Player.h"
+#include "Game.h"
 #include "BitHolder.h"
 #include <cmath>
 
@@ -58,7 +60,9 @@ void Bit::setPickedUp(bool up)
 
 bool Bit::friendly()
 {
-	return true;
+	Player *owner = getOwner();
+	if (!owner) return false;
+	return owner == owner->game()->getCurrentPlayer();
 }
 
 bool Bit::unfriendly()
