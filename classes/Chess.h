@@ -8,6 +8,15 @@ constexpr int pieceSize = 80;
 constexpr int WHITE = 1;
 constexpr int BLACK = -1;
 
+struct Move
+{
+    BitHolder* src;
+    BitHolder* dst;
+    Bit* piece;
+
+    Move(BitHolder* s, BitHolder* d, Bit* p) : src(s), dst(d), piece(p) {}
+};
+
 enum AllBitBoards
 {
     WHITE_PAWNS,
@@ -44,6 +53,8 @@ public:
     bool canPawnMove(Bit &bit, BitHolder &src, BitHolder &dst);
     bool canKnightMove(Bit &bit, BitHolder &src, BitHolder &dst);
     bool canKingMove(Bit &bit, BitHolder &src, BitHolder &dst);
+
+    std::vector<Move> generateAllMoves();
 
     void stopGame() override;
 

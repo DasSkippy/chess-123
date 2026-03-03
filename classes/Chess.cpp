@@ -43,12 +43,17 @@ Bit* Chess::PieceForPlayer(const int playerNumber, ChessPiece piece)
 
 void Chess::setUpBoard()
 {
+    std::cout << "testing" << std::endl;
+
     setNumberOfPlayers(2);
     _gameOptions.rowX = 8;
     _gameOptions.rowY = 8;
 
     _grid->initializeChessSquares(pieceSize, "boardsquare.png");
     FENtoBoard("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR");
+
+    auto moves = generateAllMoves();
+    std::cout << "Generated moves: " << moves.size() << std::endl;  // should be 20 at start
 
     // _currentPlayer = WHITE;
     // _moves = generateAllMoves
@@ -140,6 +145,44 @@ bool Chess::canKingMove(Bit &bit, BitHolder &src, BitHolder &dst)
     return false;
 }
 
+std::vector<Move> Chess::generateAllMoves()
+{
+    std::vector<Move> moves;
+
+    // Loop over all squares
+    for (int x = 0; x < 8; x++)
+    {
+        for (int y = 0; y < 8; y++)
+        {
+            BitHolder* src = _grid->getSquare(x, y);
+            if (!src || src->empty()) continue;
+
+            Bit* bit = src->bit();
+
+            // Only generate moves for current player
+            if (!canBitMoveFrom(*bit, *src)) continue;
+
+            // Try all possible destination squares
+            for (int dx = 0; dx < 8; dx++)
+            {
+                for (int dy = 0; dy < 8; dy++)
+                {
+                    BitHolder* dst = _grid->getSquare(dx, dy);
+                    if (!dst) continue;
+
+                    // Check if move is legal
+                    if (canBitMoveFromTo(*bit, *src, *dst))
+                    {
+                        moves.emplace_back(src, dst, bit);
+                    }
+                }
+            }
+        }
+    }
+
+    return moves;
+}
+
 void Chess::FENtoBoard(const std::string& fen) {
     // convert a FEN string to a board
     // FEN is a space delimited string with 6 fields
@@ -212,7 +255,7 @@ bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst) {
     }
 
     // TODO: implement other pieces
-    return true;
+    return false;
 }
 
 void Chess::stopGame()
