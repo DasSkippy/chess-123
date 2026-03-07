@@ -66,20 +66,18 @@ bool Chess::canPawnMove(Bit &bit, BitHolder &src, BitHolder &dst)
     ChessSquare *dstSquare = dynamic_cast<ChessSquare*>(&dst);
     if (!srcSquare || !dstSquare) return false;
 
-    int direction = (bit.gameTag() < 128) ? 1 : -1; // white moves up, black moves down
-    int startRow = (bit.gameTag() < 128) ? 1 : 6; // white starts on row 1, black starts on row 6
+    int direction = (bit.gameTag() < 128) ? 1 : -1;
+    int startRow = (bit.gameTag() < 128) ? 1 : 6;
 
     int srcCol = srcSquare->getColumn();
     int srcRow = srcSquare->getRow();
     int dstCol = dstSquare->getColumn();
     int dstRow = dstSquare->getRow();
 
-    // Check for standard one-square move
     if (dstCol == srcCol && dstRow == srcRow + direction && dst.empty()) {
         return true;
     }
 
-    // Check for two-square move from starting position
     if (dstCol == srcCol && dstRow == srcRow + 2 * direction && srcRow == startRow && dst.empty()) {
         ChessSquare *intermediateSquare = _grid->getSquare(srcCol, srcRow + direction);
         if (intermediateSquare && intermediateSquare->empty()) {
@@ -87,7 +85,6 @@ bool Chess::canPawnMove(Bit &bit, BitHolder &src, BitHolder &dst)
         }
     }
 
-    // Check for captures
     if (std::abs(dstCol - srcCol) == 1 && dstRow == srcRow + direction && !dst.empty() && !dst.bit()->friendly()) {
         return true;
     }
@@ -109,9 +106,7 @@ bool Chess::canKnightMove(Bit &bit, BitHolder &src, BitHolder &dst)
     int colDiff = std::abs(dstCol - srcCol);
     int rowDiff = std::abs(dstRow - srcRow);
 
-    // Check for L-shaped move
     if ((colDiff == 2 && rowDiff == 1) || (colDiff == 1 && rowDiff == 2)) {
-        // Check if destination is empty or occupied by an opponent's piece
         if (dst.empty() || !dst.bit()->friendly()) {
             return true;
         }
@@ -134,9 +129,7 @@ bool Chess::canKingMove(Bit &bit, BitHolder &src, BitHolder &dst)
     int colDiff = std::abs(dstCol - srcCol);
     int rowDiff = std::abs(dstRow - srcRow);
 
-    // Check for one-square move in any direction
     if (colDiff <= 1 && rowDiff <= 1) {
-        // Check if destination is empty or occupied by an opponent's piece
         if (dst.empty() || !dst.bit()->friendly()) {
             return true;
         }
@@ -145,11 +138,79 @@ bool Chess::canKingMove(Bit &bit, BitHolder &src, BitHolder &dst)
     return false;
 }
 
+bool Chess::canRookMove(Bit &bit, BitHolder &src, BitHolder &dst)
+{
+    ChessSquare *srcSquare = dynamic_cast<ChessSquare*>(&src);
+    ChessSquare *dstSquare = dynamic_cast<ChessSquare*>(&dst);
+    if (!srcSquare || !dstSquare) return false;
+
+    int srcCol = srcSquare->getColumn();
+    int srcRow = srcSquare->getRow();
+    int dstCol = dstSquare->getColumn();
+    int dstRow = dstSquare->getRow();
+
+    if (srcCol == dstCol || srcRow == dstRow) {
+        if (dst.empty() || !dst.bit()->friendly()) {
+            if (srcCol == dstCol) {
+                int step = (dstRow > srcRow) ? 1 : -1;
+                for (int r = srcRow + step; r != dstRow; r += step) {
+                    if (!_grid->getSquare(srcCol, r)->empty()) {
+                        return false;
+                    }
+                }
+            } else {
+                int step = (dstCol > srcCol) ? 1 : -1;
+                for (int c = srcCol + step; c != dstCol; c += step) {
+                    if (!_grid->getSquare(c, srcRow)->empty()) {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Chess::canBishopMove(Bit &bit, BitHolder &src, BitHolder &dst)
+{
+    ChessSquare *srcSquare = dynamic_cast<ChessSquare*>(&src);
+    ChessSquare *dstSquare = dynamic_cast<ChessSquare*>(&dst);
+    if (!srcSquare || !dstSquare) return false;
+
+    int srcCol = srcSquare->getColumn();
+    int srcRow = srcSquare->getRow();
+    int dstCol = dstSquare->getColumn();
+    int dstRow = dstSquare->getRow();
+
+    int colDiff = std::abs(dstCol - srcCol);
+    int rowDiff = std::abs(dstRow - srcRow);
+
+    if (colDiff == rowDiff) {
+        if (dst.empty() || !dst.bit()->friendly()) {
+            int colStep = (dstCol > srcCol) ? 1 : -1;
+            int rowStep = (dstRow > srcRow) ? 1 : -1;
+            for (int c = srcCol + colStep, r = srcRow + rowStep; c != dstCol; c += colStep, r += rowStep) {
+                if (!_grid->getSquare(c, r)->empty()) {
+                    return false;
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Chess::canQueenMove(Bit &bit, BitHolder &src, BitHolder &dst)
+{
+    // Queen can move like a rook or a bishop
+    return canRookMove(bit, src, dst) || canBishopMove(bit, src, dst);
+}
+
 std::vector<Move> Chess::generateAllMoves()
 {
     std::vector<Move> moves;
 
-    // Loop over all squares
     for (int x = 0; x < 8; x++)
     {
         for (int y = 0; y < 8; y++)
@@ -159,10 +220,8 @@ std::vector<Move> Chess::generateAllMoves()
 
             Bit* bit = src->bit();
 
-            // Only generate moves for current player
             if (!canBitMoveFrom(*bit, *src)) continue;
 
-            // Try all possible destination squares
             for (int dx = 0; dx < 8; dx++)
             {
                 for (int dy = 0; dy < 8; dy++)
@@ -170,7 +229,6 @@ std::vector<Move> Chess::generateAllMoves()
                     BitHolder* dst = _grid->getSquare(dx, dy);
                     if (!dst) continue;
 
-                    // Check if move is legal
                     if (canBitMoveFromTo(*bit, *src, *dst))
                     {
                         moves.emplace_back(src, dst, bit);
@@ -252,6 +310,15 @@ bool Chess::canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst) {
     }
     if (pieceType == King) {
         return canKingMove(bit, src, dst);
+    }
+    if (pieceType == Rook) {
+        return canRookMove(bit, src, dst);
+    }
+    if (pieceType == Bishop) {
+        return canBishopMove(bit, src, dst);
+    }
+    if (pieceType == Queen) {
+        return canQueenMove(bit, src, dst);
     }
 
     // TODO: implement other pieces

@@ -53,6 +53,9 @@ public:
     bool canPawnMove(Bit &bit, BitHolder &src, BitHolder &dst);
     bool canKnightMove(Bit &bit, BitHolder &src, BitHolder &dst);
     bool canKingMove(Bit &bit, BitHolder &src, BitHolder &dst);
+    bool canRookMove(Bit &bit, BitHolder &src, BitHolder &dst);
+    bool canBishopMove(Bit &bit, BitHolder &src, BitHolder &dst);
+    bool canQueenMove(Bit &bit, BitHolder &src, BitHolder &dst);
 
     std::vector<Move> generateAllMoves();
 
