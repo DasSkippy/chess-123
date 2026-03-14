@@ -14,7 +14,19 @@ struct Move
     BitHolder* dst;
     Bit* piece;
 
-    Move(BitHolder* s, BitHolder* d, Bit* p) : src(s), dst(d), piece(p) {}
+    Move(BitHolder* s, BitHolder* d, Bit* p)
+    {
+        src = s;
+        dst = d;
+        piece = p;
+    }
+
+    Move()
+    {
+        src = nullptr;
+        dst = nullptr;
+        piece = nullptr;
+    }
 };
 
 enum AllBitBoards
@@ -45,6 +57,7 @@ public:
     ~Chess();
 
     void setUpBoard() override;
+    void endTurn() override;
 
     bool canBitMoveFrom(Bit &bit, BitHolder &src) override;
     bool canBitMoveFromTo(Bit &bit, BitHolder &src, BitHolder &dst) override;
@@ -56,6 +69,13 @@ public:
     bool canRookMove(Bit &bit, BitHolder &src, BitHolder &dst);
     bool canBishopMove(Bit &bit, BitHolder &src, BitHolder &dst);
     bool canQueenMove(Bit &bit, BitHolder &src, BitHolder &dst);
+
+    void makeMove(const Move& move);
+    void undoMove(const Move& move, Bit* captured);
+    int evaluateBoard();
+    int negamax(int depth, int alpha, int beta, int color);
+    Move findBestMove(int depth, int color);
+    void updateAI() override;
 
     std::vector<Move> generateAllMoves();
 

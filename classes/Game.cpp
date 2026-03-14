@@ -2,6 +2,7 @@
 #include "Bit.h"
 #include "BitHolder.h"
 #include "Turn.h"
+#include "Chess.h"
 #include "../Application.h"
 
 Game::Game()
@@ -98,6 +99,8 @@ void Game::endTurn()
 	turn->_gameNumber = _gameOptions.gameNumber;
 	_turns.push_back(turn);
 	ClassGame::EndOfTurn();
+
+	updateAI();
 }
 
 //
@@ -108,6 +111,11 @@ void Game::endTurn()
 //
 void Game::scanForMouse()
 {
+	// If the game is over, keep rendering the final board but ignore input.
+	if (_winner)
+	{
+		return;
+	}
 	if (gameHasAI() && getCurrentPlayer()->isAIPlayer())
 	{
 		return;
@@ -239,11 +247,12 @@ bool Game::animateAndPlaceBitFromTo(Bit &bit, BitHolder &src, BitHolder &dst)
 
 bool Game::gameHasAI()
 {
-	return false;
+	return _gameOptions.AIPlaying;
 }
 
 void Game::updateAI()
 {
+
 }
 
 void Game::mouseDown(ImVec2 &location, Entity *entity)
