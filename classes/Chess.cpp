@@ -582,7 +582,6 @@ Player* Chess::checkForWinner()
         }
     });
 
-    // If a king is missing, the other side wins. (No check/checkmate rules yet.)
     if (!whiteKing && blackKing) return getPlayerAt(1);
     if (!blackKing && whiteKing) return getPlayerAt(0);
 
@@ -660,7 +659,7 @@ int Chess::evaluateBoard()
     _grid->forEachSquare([&](ChessSquare* square, int x, int y) {
         if (square->bit()) {
             int pieceValue = 0;
-            int pieceType = square->bit()->gameTag() & 127; // mask out color
+            int pieceType = square->bit()->gameTag() & 127;
             switch (pieceType) {
                 case Pawn: pieceValue = 10; break;
                 case Knight: pieceValue = 30; break;
@@ -689,8 +688,7 @@ int Chess::negamax(int depth, int alpha, int beta, int color)
     if (moves.empty()) {
         return color * evaluateBoard();
     }
-
-    // Avoid UB from negating INT_MIN; keep bounds within +/- kSearchInf.
+    
     if (alpha < -kSearchInf) alpha = -kSearchInf;
     if (beta > kSearchInf) beta = kSearchInf;
 
@@ -707,7 +705,7 @@ int Chess::negamax(int depth, int alpha, int beta, int color)
         maxEval = std::max(maxEval, eval);
         alpha = std::max(alpha, eval);
         if (alpha >= beta) {
-            break; // beta cut-off
+            break;
         }
     }
 
